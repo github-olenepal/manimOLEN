@@ -1,15 +1,20 @@
-from manimlib import *
+from manimlib import * #using manim from 3blue1brown instead of the manim community edition!
 import numpy as np
+import json
+import os
+
 
 # basic definitions
 def register_define_fonts():
-    # First, verify all font paths exist
+    base_project_dir = "/home/pawan/Documents/olenepal/manimOLEN/"
+    fonts_dir = os.path.join(base_project_dir, "fonts")
+    
     font_paths = [
-        "fonts/Kanchan Regular.ttf",
-        "fonts/Aakha 2011.ttf",
-        "fonts/Laila-Regular.ttf",
-        "fonts/NotoSerifTibetan-Regular.ttf",
-        "fonts/NotoSansTirhuta-Regular.ttf"
+        os.path.join(fonts_dir, "Kanchan Regular.ttf"),
+        os.path.join(fonts_dir, "Aakha 2011.ttf"),
+        os.path.join(fonts_dir, "Laila-Regular.ttf"),
+        os.path.join(fonts_dir, "NotoSerifTibetan-Regular.ttf"),
+        os.path.join(fonts_dir, "NotoSansTirhuta-Regular.ttf")
     ]
     
     # Check and register fonts
@@ -54,6 +59,7 @@ nepali_font, tibetan_font, english_font, nepalbhasa_font, maithili_font = regist
 language = "english"
 show_subtitle = True
 
+# Construction of 60 degrees
 class Draw60DegreesCompassFinal(Scene):
     def __init__(self, language=language, **kwargs):
         super().__init__(**kwargs)
@@ -63,13 +69,14 @@ class Draw60DegreesCompassFinal(Scene):
 
     def load_subtitles(self, language):
         """Load subtitles from the specified language's JSON file."""
-        subtitle_file = f"subtitles/{language}.json"
+        subtitle_file = f"subtitles60/{language}.json"
         if not os.path.exists(subtitle_file):
             raise FileNotFoundError(f"Subtitle file {subtitle_file} not found!")
         with open(subtitle_file, 'r', encoding='utf-8') as file:
             return json.load(file)
 
-    def add_subtitle(self, key, font_size=20, max_width_ratio=0.7):
+  
+    def add_subtitle(self, key, font_size=30, max_width_ratio=0.7):
         """Helper function to add and animate subtitles at the bottom of the screen."""
         if not self.show_subtitles:
             return None, None
@@ -81,7 +88,7 @@ class Draw60DegreesCompassFinal(Scene):
         font = self.get_font_by_language()
 
         # Calculate the maximum width for the subtitle text
-        max_width = config["frame_width"] * max_width_ratio
+        max_width = FRAME_WIDTH * max_width_ratio
 
         # Break the subtitle into multiple lines if it exceeds max width
         words = subtitle_text.split()
@@ -90,7 +97,7 @@ class Draw60DegreesCompassFinal(Scene):
 
         for word in words:
             test_line = f"{current_line} {word}".strip()
-            if MarkupText(test_line, font_size=font_size, font=font).width > max_width:
+            if MarkupText(test_line, font_size=font_size, font=font).get_width() > max_width:
                 lines.append(current_line.strip())
                 current_line = word
             else:
@@ -106,29 +113,16 @@ class Draw60DegreesCompassFinal(Scene):
         subtitle_lines.arrange(DOWN, center=True, aligned_edge=ORIGIN)
 
         # Position the subtitle group at the bottom center of the screen
-        subtitle_lines.move_to(DOWN * (config["frame_height"] / 2 - 0.5))
-
-        # Dynamically calculate the height of the entire group for the background
-        text_height = subtitle_lines.height
-        max_line_width = max(line.width for line in subtitle_lines)
-
-        # Add a background rectangle for better visibility
-        background = Rectangle(
-            width=max_line_width + 0.4,
-            height=text_height + 0.2,
-            color=BLACK,
-            fill_opacity=0.8,
-            stroke_width=0
-        ).move_to(subtitle_lines)
+        subtitle_lines.move_to(3*DOWN)
 
         # Display the subtitle with an animation
-        self.play(FadeIn(background), Write(subtitle_lines))
-        return subtitle_lines, background
+        self.play(Write(subtitle_lines))
+        return subtitle_lines
 
-    def remove_subtitle(self, subtitle, background):
+    def remove_subtitle(self, subtitle):
         """Helper function to remove subtitles."""
-        if subtitle and background:
-            self.play(FadeOut(subtitle), FadeOut(background))
+        if subtitle:
+            self.play(FadeOut(subtitle)) # fade out the subtitle
 
     def get_font_by_language(self):
         """Get the appropriate font based on the selected language."""
@@ -153,36 +147,38 @@ class Draw60DegreesCompassFinal(Scene):
         self.add(grid)
 
         # Step 1: Draw a line segment PQ
-        subtitle, background = self.add_subtitle("step_1")
+        subtitle = self.add_subtitle("step_1")
         line_width_param = 3
         line = Line(LEFT * line_width_param, RIGHT * line_width_param, color=TEAL).shift(DOWN)
-        P = Dot(line.get_left(), color=BLUE)
-        Q = Dot(line.get_right(), color=BLUE)
+        
+        P = Dot(line.get_start(), color=BLUE)
+        Q = Dot(line.get_end(), color=BLUE)
         P_label = Text("P", font_size=label_font_size).next_to(P, LEFT)
         Q_label = Text("Q", font_size=label_font_size).next_to(Q, RIGHT)
 
-        self.play(Create(line), FadeIn(P, Q))
+        self.play(ShowCreation(line), FadeIn(P), FadeIn(Q))
         self.play(Write(P_label), Write(Q_label))
         self.play(Indicate(P), Indicate(Q))
         self.wait(1)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
 
         # Step 2: Set the compass width
-        subtitle, background = self.add_subtitle("step_2")
-        mid_point = line.point_from_proportion(0.6)
-        highlight_dot = Dot(mid_point, color=ORANGE).scale(1.2)
-        self.play(FadeIn(highlight_dot))
+        subtitle = self.add_subtitle("step_2")
+        mid_point = (line.get_start()+line.get_end())/2
+        midpoint_PQ = Dot(mid_point, color=ORANGE).scale(1.2)
+        self.play(FadeIn(midpoint_PQ))
+        self.play(Indicate(midpoint_PQ))
         self.wait(1)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
 
         # Step 3: Draw the first arc
-        subtitle, background = self.add_subtitle("step_3")
-        compass_radius = Line(P.get_center(), highlight_dot.get_center(), color=RED)
+        subtitle = self.add_subtitle("step_3")
+        compass_radius = Line(P.get_center(), midpoint_PQ.get_center(), color=RED)
         arc_radius = compass_radius.get_length()
-        self.play(Create(compass_radius), run_time=1)
+        self.play(ShowCreation(compass_radius), run_time=1)
 
         arc = Arc(radius=arc_radius, start_angle=0.8 * PI, angle=-1.05 * PI, color=MAROON).shift(P.get_center())
-        self.play(Create(arc), run_time=2)
+        self.play(ShowCreation(arc), run_time=2)
 
         arc_touch_point = P.get_center() + np.array([arc_radius, 0, 0])
         A = Dot(arc_touch_point, color=BLUE)
@@ -190,16 +186,16 @@ class Draw60DegreesCompassFinal(Scene):
         self.play(FadeIn(A), Write(A_label))
         self.play(Indicate(A))
         self.wait(1)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
 
         # Step 4: Draw the second arc
-        subtitle, background = self.add_subtitle("step_4")
+        subtitle = self.add_subtitle("step_4")
         arc_from_A = Arc(radius=arc_radius, start_angle=0.8 * PI, angle=-PI / 3, color=PURPLE).shift(A.get_center())
-        self.play(Create(arc_from_A), run_time=2)
-        self.remove_subtitle(subtitle, background)
+        self.play(ShowCreation(arc_from_A), run_time=2)
+        self.remove_subtitle(subtitle)
 
         # Step 5: Calculate point O
-        subtitle, background = self.add_subtitle("step_5")
+        subtitle = self.add_subtitle("step_5")
         PA_vector = A.get_center() - P.get_center()
         rotation_matrix = np.array([[np.cos(PI / 3), -np.sin(PI / 3)], [np.sin(PI / 3), np.cos(PI / 3)]])
         rotated_PA = np.dot(rotation_matrix, PA_vector[:2])
@@ -209,32 +205,33 @@ class Draw60DegreesCompassFinal(Scene):
         self.play(FadeIn(O), Write(O_label))
         self.play(Indicate(O))
         self.wait(2)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
 
         # Step 6: Draw the angle line
-        subtitle, background = self.add_subtitle("step_6")
+        subtitle = self.add_subtitle("step_6")
         direction_vector = O_position - P.get_center()
         extended_end = O_position + direction_vector
         angle_line_extended = Line(P.get_center(), extended_end, color=YELLOW)
-        self.play(Create(angle_line_extended), run_time=2)
-        self.remove_subtitle(subtitle, background)
+        self.play(ShowCreation(angle_line_extended), run_time=2)
+        self.remove_subtitle(subtitle)
 
         # Step 7: Add angle arc and label
-        subtitle, background = self.add_subtitle("step_7")
+        subtitle = self.add_subtitle("step_7")
         angle_arc = Arc(radius=0.5, start_angle=0.4 * PI, angle=-PI / 2.2, color=GREEN).shift(P.get_center())
-        self.play(Create(angle_arc), run_time=1)
+        self.play(ShowCreation(angle_arc), run_time=1)
 
         # Adjusting the angle label position further from the arc
-        arc_midpoint = angle_arc.point_from_proportion(0.5)
-        label_offset = (arc_midpoint - angle_arc.get_center()) * 3.0  # Increase offset for more spacing
+        arc_midpoint = angle_arc.get_arc_center()
+        label_offset = angle_arc.get_center() * -0.3 
         label_position = arc_midpoint + label_offset
         angle_label = Text("60°", font_size=label_font_size).move_to(label_position)
         self.play(Write(angle_label))
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
 
         # Wait to finalize the scene
         self.wait(2)
 
+# Construction of 120 degrees
 class Draw120DegreesCompassFinal(Scene):
     def __init__(self, language=language, **kwargs):
         super().__init__(**kwargs)
@@ -250,7 +247,7 @@ class Draw120DegreesCompassFinal(Scene):
         with open(subtitle_file, 'r', encoding='utf-8') as file:
             return json.load(file)
 
-    def add_subtitle(self, key, font_size=20, max_width_ratio=0.7):
+    def add_subtitle(self, key, font_size=30, max_width_ratio=0.7):
         """Helper function to add and animate subtitles at the bottom of the screen."""
         if not self.show_subtitles:
             return None, None
@@ -262,7 +259,7 @@ class Draw120DegreesCompassFinal(Scene):
         font = self.get_font_by_language()
 
         # Calculate the maximum width for the subtitle text
-        max_width = config["frame_width"] * max_width_ratio
+        max_width = FRAME_WIDTH * max_width_ratio
 
         # Break the subtitle into multiple lines if it exceeds max width
         words = subtitle_text.split()
@@ -271,7 +268,7 @@ class Draw120DegreesCompassFinal(Scene):
 
         for word in words:
             test_line = f"{current_line} {word}".strip()
-            if MarkupText(test_line, font_size=font_size, font=font).width > max_width:
+            if MarkupText(test_line, font_size=font_size, font=font).get_width() > max_width:
                 lines.append(current_line.strip())
                 current_line = word
             else:
@@ -287,29 +284,16 @@ class Draw120DegreesCompassFinal(Scene):
         subtitle_lines.arrange(DOWN, center=True, aligned_edge=ORIGIN)
 
         # Position the subtitle group at the bottom center of the screen
-        subtitle_lines.move_to(DOWN * (config["frame_height"] / 2 - 0.5))
-
-        # Dynamically calculate the height of the entire group for the background
-        text_height = subtitle_lines.height
-        max_line_width = max(line.width for line in subtitle_lines)
-
-        # Add a background rectangle for better visibility
-        background = Rectangle(
-            width=max_line_width + 0.4,
-            height=text_height + 0.2,
-            color=BLACK,
-            fill_opacity=0.8,
-            stroke_width=0
-        ).move_to(subtitle_lines)
+        subtitle_lines.move_to(3*DOWN)
 
         # Display the subtitle with an animation
-        self.play(FadeIn(background), Write(subtitle_lines))
-        return subtitle_lines, background
+        self.play(Write(subtitle_lines))
+        return subtitle_lines
 
-    def remove_subtitle(self, subtitle, background):
+    def remove_subtitle(self, subtitle):
         """Helper function to remove subtitles."""
-        if subtitle and background:
-            self.play(FadeOut(subtitle), FadeOut(background))
+        if subtitle:
+            self.play(FadeOut(subtitle)) # fade out the subtitle
 
     def get_font_by_language(self):
         """Get the appropriate font based on the selected language."""
@@ -333,34 +317,34 @@ class Draw120DegreesCompassFinal(Scene):
         self.add(grid)
 
         # Step 1: Draw ray OA
-        subtitle, background = self.add_subtitle("step_1")
+        subtitle = self.add_subtitle("step_1")
         ray = Line(LEFT * 3, RIGHT * 3, color=TEAL, stroke_width=2).shift(DOWN)
         O = Dot(ray.get_left(), color=BLUE)
         A = Dot(ray.get_right(), color=BLUE)
         O_label = Text("O", font_size=label_font_size).next_to(O, LEFT)
         A_label = Text("A", font_size=label_font_size).next_to(A, RIGHT)
 
-        self.play(Create(ray), FadeIn(O, A))
+        self.play(ShowCreation(ray), FadeIn(O), FadeIn(A))
         self.play(Write(O_label), Write(A_label))
         self.play(Indicate(O), Indicate(A))
         self.wait(1)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
 
         # Step 2: Draw an arc from O
-        subtitle, background = self.add_subtitle("step_2")
+        subtitle = self.add_subtitle("step_2")
         radius = 3
         arc = Arc(radius=radius, start_angle=PI, angle=-PI, color=MAROON).shift(O.get_center())
         P = Dot(O.get_center() + np.array([radius, 0, 0]), color=BLUE)
         P_label = Text("P", font_size=label_font_size).next_to(P, UP+RIGHT)
 
-        self.play(Create(arc))
+        self.play(ShowCreation(arc))
         self.play(FadeIn(P), Write(P_label))
         self.play(Indicate(P))
         self.wait(1)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
 
         # Step 3: Draw an arc from P to intersect at Q
-        subtitle, background = self.add_subtitle("step_3")
+        subtitle = self.add_subtitle("step_3")
         Q_pos = P.get_center() + np.array([
             radius * np.cos(2 * PI / 3),
             radius * np.sin(2 * PI / 3),
@@ -375,13 +359,13 @@ class Draw120DegreesCompassFinal(Scene):
         Q = Dot(Q_pos, color=BLUE)
         Q_label = Text("Q", font_size=label_font_size).next_to(Q, DOWN)
 
-        self.play(Create(arc_from_P), FadeIn(Q), Write(Q_label))
+        self.play(ShowCreation(arc_from_P), FadeIn(Q), Write(Q_label))
         self.play(Indicate(Q))
         self.wait(1)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
 
         # Step 4: Draw an arc from Q to intersect at S
-        subtitle, background = self.add_subtitle("step_4")
+        subtitle = self.add_subtitle("step_4")
         S_pos = O.get_center() + np.array([
             radius * np.cos(2 * PI / 3),
             radius * np.sin(2 * PI / 3),
@@ -396,25 +380,33 @@ class Draw120DegreesCompassFinal(Scene):
         S = Dot(S_pos, color=BLUE)
         S_label = Text("S", font_size=label_font_size).next_to(S, LEFT)
 
-        self.play(Create(arc_from_Q), FadeIn(S), Write(S_label))
+        self.play(ShowCreation(arc_from_Q), FadeIn(S), Write(S_label))
         self.play(Indicate(S))
         self.wait(1)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
 
         # Step 5: Draw and extend line OS
-        subtitle, background = self.add_subtitle("step_5")
+        subtitle = self.add_subtitle("step_5")
         OS_vector = S.get_center() - O.get_center()
         extended_point = S.get_center() + 1.5 * OS_vector
         OS_extended = Line(O.get_center(), extended_point, color=YELLOW)
         D = Dot(extended_point, color=BLUE)
         D_label = Text("D", font_size=label_font_size).next_to(D, RIGHT)
 
-        self.play(Create(OS_extended), FadeIn(D), Write(D_label))
+        self.play(ShowCreation(OS_extended), FadeIn(D), Write(D_label))
         angle_arc = Arc(radius=0.5, start_angle=0, angle=2 * PI / 3, color=GREEN).shift(O.get_center())
-        angle_label = Text("120°", font_size=label_font_size).next_to(angle_arc.point_from_proportion(0.5), UP)
-        self.play(Create(angle_arc), Write(angle_label))
-        self.remove_subtitle(subtitle, background)
+        self.play(ShowCreation(angle_arc))
 
+        # Adjusting the angle label position further from the arc
+        arc_midpoint = angle_arc.get_arc_center()
+        label_offset = angle_arc.get_center() * -0.3 
+        label_position = arc_midpoint + label_offset
+        angle_label = Text("120°", font_size=label_font_size).move_to(label_position)
+        self.play(Write(angle_label))
+        self.remove_subtitle(subtitle)
+
+
+# Construction of 30 degrees
 class Draw30DegreesCompassFinal(Scene):
     def __init__(self, language=language, **kwargs):
         super().__init__(**kwargs)
@@ -468,67 +460,53 @@ class Draw30DegreesCompassFinal(Scene):
         with open(subtitle_file, 'r', encoding='utf-8') as file:
             return json.load(file)
 
-    def add_subtitle(self, key, font_size=20, max_width_ratio=0.7):
-        """
-        Enhanced subtitle addition with robust text wrapping.
-        
-        Args:
-            key (str): Subtitle key from JSON.
-            font_size (int): Size of subtitle text.
-            max_width_ratio (float): Maximum width proportion of screen.
-        
-        Returns:
-            tuple: Subtitle text and background rectangle.
-        """
+    def add_subtitle(self, key, font_size=30, max_width_ratio=0.7):
+        """Helper function to add and animate subtitles at the bottom of the screen."""
         if not self.show_subtitles:
             return None, None
 
-        subtitle_text = self.subtitles.get(key, f"Subtitle for {key} not found")
-        max_width = config["frame_width"] * max_width_ratio
+        # Get subtitle text from the subtitles dictionary
+        subtitle_text = self.subtitles.get(key, "")
 
-        # Break the subtitle into multiple lines if needed
+        # Choose the font based on the language
+        font = self.get_font_by_language()
+
+        # Calculate the maximum width for the subtitle text
+        max_width = FRAME_WIDTH * max_width_ratio
+
+        # Break the subtitle into multiple lines if it exceeds max width
         words = subtitle_text.split()
         lines = []
         current_line = ""
 
         for word in words:
             test_line = f"{current_line} {word}".strip()
-            if MarkupText(test_line, font_size=font_size).width > max_width:
+            if MarkupText(test_line, font_size=font_size, font=font).get_width() > max_width:
                 lines.append(current_line.strip())
                 current_line = word
             else:
                 current_line = test_line
 
-        lines.append(current_line.strip())
+        lines.append(current_line.strip())  # Add the last line
 
+        # Create a VGroup to stack lines and center them
         subtitle_lines = VGroup(*[
-            MarkupText(line, font_size=font_size).set_color(WHITE)
+            MarkupText(line, font_size=font_size, font=font).set_color(WHITE)
             for line in lines
         ])
         subtitle_lines.arrange(DOWN, center=True, aligned_edge=ORIGIN)
-        subtitle_lines.move_to(DOWN * (config["frame_height"] / 2 - 1))
 
-        background = Rectangle(
-            width=subtitle_lines.width + 0.4,
-            height=subtitle_lines.height + 0.2,
-            color=BLACK,
-            fill_opacity=0.8,
-            stroke_width=0
-        ).move_to(subtitle_lines)
+        # Position the subtitle group at the bottom center of the screen
+        subtitle_lines.move_to(3*DOWN)
 
-        self.play(FadeIn(background), Write(subtitle_lines))
-        return subtitle_lines, background
+        # Display the subtitle with an animation
+        self.play(Write(subtitle_lines))
+        return subtitle_lines
 
-    def remove_subtitle(self, subtitle, background):
-        """
-        Remove subtitle with a fade out animation.
-        
-        Args:
-            subtitle (VGroup): Subtitle text group.
-            background (Rectangle): Subtitle background rectangle.
-        """
-        if subtitle and background:
-            self.play(FadeOut(subtitle), FadeOut(background))
+    def remove_subtitle(self, subtitle):
+        """Helper function to remove subtitles."""
+        if subtitle:
+            self.play(FadeOut(subtitle)) # fade out the subtitle
 
     def highlight_point(self, point, label=None):
         """
@@ -562,7 +540,7 @@ class Draw30DegreesCompassFinal(Scene):
             x_range=[-7, 7, 1], 
             y_range=[-4, 4, 1],
             background_line_style={
-                "stroke_color": GRAY,
+                "stroke_color": GREY,
                 "stroke_width": 0.5,
                 "stroke_opacity": 0.2
             }
@@ -570,14 +548,14 @@ class Draw30DegreesCompassFinal(Scene):
         self.add(grid)
 
         # Step 1: Draw OA with enhanced point and label highlighting
-        subtitle, background = self.add_subtitle("step_1")
+        subtitle = self.add_subtitle("step_1")
         ray = Line(LEFT * 3, RIGHT * 3, color=self.CONSTRUCTION_COLOR, stroke_width=2).shift(DOWN)
         O = Dot(ray.get_left(), color=self.POINT_COLOR)
         A = Dot(ray.get_right(), color=self.POINT_COLOR)
         O_label = Text("O", font_size=label_font_size).next_to(O, LEFT)
         A_label = Text("A", font_size=label_font_size).next_to(A, RIGHT)
 
-        self.play(Create(ray), FadeIn(O, A))
+        self.play(ShowCreation(ray), FadeIn(O, A))
         self.play(Write(O_label), Write(A_label))
         self.play(self.highlight_point(O, O_label), self.highlight_point(A, A_label))
         
@@ -587,26 +565,26 @@ class Draw30DegreesCompassFinal(Scene):
             color=self.HIGHLIGHT_COLOR, 
             fill_opacity=0.2
         ).move_to(O.get_center())
-        self.play(Create(center_highlight))
+        self.play(ShowCreation(center_highlight))
         
         self.wait(1)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
 
         # Step 2: Draw an arc from O to intersect OA at C
-        subtitle, background = self.add_subtitle("step_2")
+        subtitle = self.add_subtitle("step_2")
         radius = 3
         arc_O = Arc(radius=radius, start_angle=self.degrees_to_manimPI(75), angle=-self.degrees_to_manimPI(80), color=MAROON).shift(O.get_center())
         C = Dot(O.get_center() + np.array([radius, 0, 0]), color=self.POINT_COLOR)
         C_label = Text("C", font_size=label_font_size).next_to(C, UP+RIGHT)
 
-        self.play(Create(arc_O))
+        self.play(ShowCreation(arc_O))
         self.play(FadeIn(C), Write(C_label))
         self.play(self.highlight_point(C, C_label))
         self.wait(1)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
 
         # Step 3: Draw an arc from C to intersect first arc at D
-        subtitle, background = self.add_subtitle("step_3")
+        subtitle = self.add_subtitle("step_3")
         D_pos = O.get_center() + np.array([
             radius * np.cos(self.degrees_to_manimPI(60)),  # x coordinate
             radius * np.sin(self.degrees_to_manimPI(60)),  # y coordinate
@@ -621,14 +599,14 @@ class Draw30DegreesCompassFinal(Scene):
         D = Dot(D_pos, color=self.POINT_COLOR)
         D_label = Text("D", font_size=label_font_size).next_to(D, UP)
         
-        self.play(Create(arc_from_C))
+        self.play(ShowCreation(arc_from_C))
         self.play(FadeIn(D), Write(D_label))
         self.play(self.highlight_point(D, D_label))
         self.wait(1)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
 
         # Step 4: Show the 60 degree angle DOC with dotted extended line
-        subtitle, background = self.add_subtitle("step_4")
+        subtitle = self.add_subtitle("step_4")
         
         # Calculate extended point beyond D
         OD_vector = D.get_center() - O.get_center()
@@ -659,16 +637,16 @@ class Draw30DegreesCompassFinal(Scene):
         )
         
         # Draw extended dotted line and show angle
-        self.play(Create(OD_extended))
-        self.play(Create(angle_60), Write(angle_label))
+        self.play(ShowCreation(OD_extended))
+        self.play(ShowCreation(angle_60), Write(angle_label))
         self.wait(1)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
         
         self.play(FadeOut(angle_label), run_time=2)
         self.wait(1)
 
         # Step 5: Draw arcs from C and D to intersect
-        subtitle, background = self.add_subtitle("step_5")
+        subtitle = self.add_subtitle("step_5")
         
         # Calculate position of point E (intersection point)
         E_pos = O.get_center() + np.array([
@@ -693,9 +671,9 @@ class Draw30DegreesCompassFinal(Scene):
             color=WHITE
         ).shift(D.get_center())
 
-        self.play(Create(arc_C))
+        self.play(ShowCreation(arc_C))
         self.wait(1)
-        self.play(Create(arc_D))
+        self.play(ShowCreation(arc_D))
         self.wait(1)
         
         # Find the intersection point E
@@ -713,7 +691,7 @@ class Draw30DegreesCompassFinal(Scene):
         self.wait(1)
 
         # Step 6: Draw line segment OE
-        subtitle, background = self.add_subtitle("step_6")
+        subtitle = self.add_subtitle("step_6")
         
         # Calculate extended point beyond E
         OE_vector = E.get_center() - O.get_center()
@@ -727,13 +705,13 @@ class Draw30DegreesCompassFinal(Scene):
             dash_length=0.15,
             dashed_ratio=0.5
         )
-        self.play(Create(OE_extended))
+        self.play(ShowCreation(OE_extended))
         self.wait(1)
         
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
         
         # Step 7: Measure ∡AOE with enhanced angle highlighting
-        subtitle, background = self.add_subtitle("step_7")
+        subtitle = self.add_subtitle("step_7")
         
         # Prepare for angle highlighting
         OA_line = Line(O.get_center(), A.get_center(), color=BLUE, stroke_width=3)
@@ -757,10 +735,10 @@ class Draw30DegreesCompassFinal(Scene):
         # Animated highlighting sequence
         self.play(
             # Gradually draw lines from O to A and O to E
-            Create(OA_line),
-            Create(OE_line),
+            ShowCreation(OA_line),
+            ShowCreation(OE_line),
             # Simultaneously create the angle arc
-            Create(angle_AOE),
+            ShowCreation(angle_AOE),
             run_time=2
         )
         
@@ -780,7 +758,7 @@ class Draw30DegreesCompassFinal(Scene):
         
         # Brief pause to emphasize the 30-degree angle
         self.wait(2)
-        self.remove_subtitle(subtitle, background)
+        self.remove_subtitle(subtitle)
         
         # Final pause with a subtle zoom out to show full construction
         self.play(

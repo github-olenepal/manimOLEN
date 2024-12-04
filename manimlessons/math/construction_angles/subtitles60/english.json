@@ -1,14 +1,10 @@
 {
-    "step_1": "Use a ruler to draw a line segment OA.",
-    
-    "step_2": "With your compass centered at O, draw an arc above OA intersecting OA at a point C. ",
-    
-    "step_3": "With the compass width fixed and centered at C, draw another arc that intersects the first arc at a point D.",
-    
-    "step_4": "The ∡DOC formed at O is now 60°. We'll bisect this angle to get our desired 30°.",
-    
-    "step_5": "Now from the points C and D, draw two more arcs that intersect with each other keeping the same compass width as before. Label this point E.",
-    
-    "step_6": "Use the ruler to draw a line segment through E. This line bisects ∡DOC.",
-    "step_7": "Measure ∡AOE using a protractor. ∡AOE = 30°."
-}
+    "step_1": "Draw a line using a ruler and label it PQ",
+    "step_2": "Set the compass width to more than half of PQ from one of the vertices P.",
+    "step_3": "Draw an arc from P intersecting PQ at point A.",
+    "step_4": "Draw an arc from A intersecting the previous arc at a point.",
+    "step_5": "Label the intersection of arcs as point O.",
+    "step_6": "Draw a line from P through O to form the angle.",
+    "step_7": "Measure ∡POA using a protractor. ∡POA = 60°."
+  }
+  
