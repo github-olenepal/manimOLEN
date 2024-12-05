@@ -3,10 +3,9 @@ import numpy as np
 import json
 import os
 
-
 # basic definitions
 def register_define_fonts():
-    base_project_dir = "/home/pawan/Documents/olenepal/manimOLEN/"
+    base_project_dir = "/home/olenepal-products/Documents/manimOLEN/"
     fonts_dir = os.path.join(base_project_dir, "fonts")
     
     font_paths = [
@@ -74,7 +73,6 @@ class Draw60DegreesCompassFinal(Scene):
             raise FileNotFoundError(f"Subtitle file {subtitle_file} not found!")
         with open(subtitle_file, 'r', encoding='utf-8') as file:
             return json.load(file)
-
   
     def add_subtitle(self, key, font_size=30, max_width_ratio=0.7):
         """Helper function to add and animate subtitles at the bottom of the screen."""
@@ -419,21 +417,7 @@ class Draw30DegreesCompassFinal(Scene):
         self.CONSTRUCTION_COLOR = TEAL
         self.ARC_COLORS = [MAROON, PURPLE, WHITE]
         self.HIGHLIGHT_COLOR = GREEN
-
-    @staticmethod
-    def degrees_to_manimPI(degrees):
-        """
-        Converts an angle in degrees to a Manim-compatible form using PI.
-        
-        Args:
-            degrees (float): Angle in degrees.
-            
-        Returns:
-            float: Angle in terms of `a * PI`, suitable for use in Manim.
-        """
-        prefactor = Fraction(degrees, 180)  # Convert degrees to prefactor of PI
-        return prefactor * PI
-
+    
     def load_subtitles(self, language):
         """
         Load subtitles from the specified language's JSON file.
@@ -508,6 +492,21 @@ class Draw30DegreesCompassFinal(Scene):
         if subtitle:
             self.play(FadeOut(subtitle)) # fade out the subtitle
 
+    def get_font_by_language(self):
+        """Get the appropriate font based on the selected language."""
+        if self.language == "nepali":
+            font = nepali_font
+        elif self.language == "tibetan":
+            font = tibetan_font
+        elif self.language == "nepalbhasa":
+            font = nepalbhasa_font
+        elif self.language == "maithili":
+            font = maithili_font
+        else:
+            font = english_font  # Default to English if language is not specified
+        return font
+
+    
     def highlight_point(self, point, label=None):
         """
         Create a pulsing highlight effect for a point.
@@ -555,7 +554,7 @@ class Draw30DegreesCompassFinal(Scene):
         O_label = Text("O", font_size=label_font_size).next_to(O, LEFT)
         A_label = Text("A", font_size=label_font_size).next_to(A, RIGHT)
 
-        self.play(ShowCreation(ray), FadeIn(O, A))
+        self.play(ShowCreation(ray), FadeIn(O),FadeIn(A))
         self.play(Write(O_label), Write(A_label))
         self.play(self.highlight_point(O, O_label), self.highlight_point(A, A_label))
         
@@ -573,7 +572,7 @@ class Draw30DegreesCompassFinal(Scene):
         # Step 2: Draw an arc from O to intersect OA at C
         subtitle = self.add_subtitle("step_2")
         radius = 3
-        arc_O = Arc(radius=radius, start_angle=self.degrees_to_manimPI(75), angle=-self.degrees_to_manimPI(80), color=MAROON).shift(O.get_center())
+        arc_O = Arc(radius=radius, start_angle=degrees_to_manimPI(75), angle=-degrees_to_manimPI(80), color=MAROON).shift(O.get_center())
         C = Dot(O.get_center() + np.array([radius, 0, 0]), color=self.POINT_COLOR)
         C_label = Text("C", font_size=label_font_size).next_to(C, UP+RIGHT)
 
@@ -586,14 +585,14 @@ class Draw30DegreesCompassFinal(Scene):
         # Step 3: Draw an arc from C to intersect first arc at D
         subtitle = self.add_subtitle("step_3")
         D_pos = O.get_center() + np.array([
-            radius * np.cos(self.degrees_to_manimPI(60)),  # x coordinate
-            radius * np.sin(self.degrees_to_manimPI(60)),  # y coordinate
+            radius * np.cos(degrees_to_manimPI(60)),  # x coordinate
+            radius * np.sin(degrees_to_manimPI(60)),  # y coordinate
             0
         ])
         arc_from_C = Arc(
             radius=radius,
-            start_angle=self.degrees_to_manimPI(130),
-            angle=-self.degrees_to_manimPI(20),
+            start_angle=degrees_to_manimPI(130),
+            angle=-degrees_to_manimPI(20),
             color=PURPLE
         ).shift(C.get_center())
         D = Dot(D_pos, color=self.POINT_COLOR)
@@ -614,18 +613,18 @@ class Draw30DegreesCompassFinal(Scene):
 
         # Create dotted line OD extended
         OD_extended = DashedLine(
-            O.get_center(),
-            extended_point,
+            start=O.get_center(),
+            end=extended_point,
             color=TEAL,
             dash_length=0.15,
-            dashed_ratio=0.5
+            positive_space_ratio=0.5
         )
         
         # Create the 60 degree angle arc
         angle_60 = Arc(
             radius=0.7,
-            start_angle=self.degrees_to_manimPI(0),
-            angle=self.degrees_to_manimPI(60),
+            start_angle=degrees_to_manimPI(0),
+            angle=degrees_to_manimPI(60),
             color=GREEN
         ).shift(O.get_center())
         
@@ -658,16 +657,16 @@ class Draw30DegreesCompassFinal(Scene):
         # First arc: centered at C 
         arc_C = Arc(
             radius=radius,
-            start_angle=self.degrees_to_manimPI(75),
-            angle=-self.degrees_to_manimPI(30),
+            start_angle=degrees_to_manimPI(75),
+            angle=-degrees_to_manimPI(30),
             color=WHITE
         ).shift(C.get_center())
 
         # Second arc: centered at D
         arc_D = Arc(
             radius=radius,
-            start_angle=self.degrees_to_manimPI(15),
-            angle=-self.degrees_to_manimPI(30),
+            start_angle=degrees_to_manimPI(15),
+            angle=-degrees_to_manimPI(30),
             color=WHITE
         ).shift(D.get_center())
 
@@ -699,11 +698,11 @@ class Draw30DegreesCompassFinal(Scene):
         
         # Create dotted line OE extended
         OE_extended = DashedLine(
-            O.get_center(),
-            extended_point,
+            start=O.get_center(),
+            end=extended_point,
             color=WHITE,
             dash_length=0.15,
-            dashed_ratio=0.5
+            positive_space_ratio=0.5
         )
         self.play(ShowCreation(OE_extended))
         self.wait(1)
@@ -720,17 +719,19 @@ class Draw30DegreesCompassFinal(Scene):
         # Create the angle ∡AOE
         angle_AOE = Arc(
             radius=0.7,
-            start_angle=self.degrees_to_manimPI(0),
-            angle=self.degrees_to_manimPI(30),
+            start_angle=degrees_to_manimPI(0),
+            angle=degrees_to_manimPI(30),
             color=BLUE
         ).shift(O.get_center())
         
-        # Add the angle label
-        angle_AOE_label = Text("30°", font_size=label_font_size).next_to(
-            angle_AOE.point_from_proportion(0.5),
-            RIGHT,
-            buff=0.1
-        )
+        # Adjusting the angle label position further from the arc
+        arc_midpoint = angle_AOE.get_arc_center()
+        label_offset = angle_AOE.get_center() * -0.3 
+        label_position = arc_midpoint + label_offset
+        angle_AOE_label = Text("30°", font_size=label_font_size).move_to(label_position)
+        self.play(Write(angle_label))
+        self.remove_subtitle(subtitle)
+
         
         # Animated highlighting sequence
         self.play(
@@ -767,5 +768,270 @@ class Draw30DegreesCompassFinal(Scene):
         )
         self.wait(2)
 
+# Construction of 90 degrees
+class Draw90DegreesCompassFinal(Scene):
+    def __init__(self, language=language, **kwargs):
+        super().__init__(**kwargs)
+        self.show_subtitles = show_subtitle  # Toggle subtitles on/off for production
+        self.language = language  # Language for subtitles
+        self.subtitles = self.load_subtitles(language)
+        
+        # Consistent color palette for geometric elements
+        self.POINT_COLOR = BLUE
+        self.CONSTRUCTION_COLOR = TEAL
+        self.ARC_COLORS = [MAROON, PURPLE, WHITE]
+        self.HIGHLIGHT_COLOR = GREEN
+    
+    def load_subtitles(self, language):
+        """
+        Load subtitles from the specified language's JSON file.
+        
+        Args:
+            language (str): Language code for subtitles.
+        
+        Returns:
+            dict: Loaded subtitle dictionary.
+        Raises:
+            FileNotFoundError: If subtitle file is missing.
+        """
+        # Note: You'll need to create this JSON file with your subtitle translations
+        subtitle_file = f"subtitles90/{language}.json"
+        if not os.path.exists(subtitle_file):
+            print(f"Warning: Subtitle file {subtitle_file} not found! Using default text.")
+            return {
+                "step_1": "Start by drawing a line segment OA",
+                "step_2": "Draw an arc from O with a specific radius",
+                # Add other default subtitle texts here
+                "step_7": "Measure the angle AOE. It is 30 degrees!"
+            }
+        
+        with open(subtitle_file, 'r', encoding='utf-8') as file:
+            return json.load(file)
 
-#
+    def add_subtitle(self, key, font_size=30, max_width_ratio=0.7):
+        """Helper function to add and animate subtitles at the bottom of the screen."""
+        if not self.show_subtitles:
+            return None, None
+
+        # Get subtitle text from the subtitles dictionary
+        subtitle_text = self.subtitles.get(key, "")
+
+        # Choose the font based on the language
+        font = self.get_font_by_language()
+
+        # Calculate the maximum width for the subtitle text
+        max_width = FRAME_WIDTH * max_width_ratio
+
+        # Break the subtitle into multiple lines if it exceeds max width
+        words = subtitle_text.split()
+        lines = []
+        current_line = ""
+
+        for word in words:
+            test_line = f"{current_line} {word}".strip()
+            if MarkupText(test_line, font_size=font_size, font=font).get_width() > max_width:
+                lines.append(current_line.strip())
+                current_line = word
+            else:
+                current_line = test_line
+
+        lines.append(current_line.strip())  # Add the last line
+
+        # Create a VGroup to stack lines and center them
+        subtitle_lines = VGroup(*[
+            MarkupText(line, font_size=font_size, font=font).set_color(WHITE)
+            for line in lines
+        ])
+        subtitle_lines.arrange(DOWN, center=True, aligned_edge=ORIGIN)
+
+        # Position the subtitle group at the bottom center of the screen
+        subtitle_lines.move_to(3*DOWN)
+
+        # Display the subtitle with an animation
+        self.play(Write(subtitle_lines))
+        return subtitle_lines
+
+    def remove_subtitle(self, subtitle):
+        """Helper function to remove subtitles."""
+        if subtitle:
+            self.play(FadeOut(subtitle)) # fade out the subtitle
+
+    def get_font_by_language(self):
+        """Get the appropriate font based on the selected language."""
+        if self.language == "nepali":
+            font = nepali_font
+        elif self.language == "tibetan":
+            font = tibetan_font
+        elif self.language == "nepalbhasa":
+            font = nepalbhasa_font
+        elif self.language == "maithili":
+            font = maithili_font
+        else:
+            font = english_font  # Default to English if language is not specified
+        return font
+
+    
+    def highlight_point(self, point, label=None):
+        """
+        Create a pulsing highlight effect for a point.
+        
+        Args:
+            point (Dot): The point to highlight.
+            label (Text, optional): Label associated with the point.
+        
+        Returns:
+            Animation sequence for highlighting.
+        """
+        pulse = AnimationGroup(
+            point.animate.scale(1.5).set_color(self.HIGHLIGHT_COLOR),
+            point.animate.scale(1/1.5).set_color(self.POINT_COLOR)
+        )
+        
+        if label:
+            return AnimationGroup(
+                Indicate(point),
+                Indicate(label),
+                pulse
+            )
+        return pulse
+
+    def construct(self):      
+        label_font_size = 24
+
+        # Grid background with adjusted position
+        grid = NumberPlane().fade(0.8).shift(DOWN)  # Shift grid down for better alignment
+        self.add(grid)
+
+        # # Step 1: Use a ruler to draw a straight line called OA.
+        subtitle = self.add_subtitle("step_1")
+        ray = Line(LEFT * 3, RIGHT * 3, color=self.CONSTRUCTION_COLOR, stroke_width=2).shift(DOWN)
+        O = Dot(ray.get_left(), color=self.POINT_COLOR)
+        A = Dot(ray.get_right(), color=self.POINT_COLOR)
+        O_label = Text("O", font_size=label_font_size).next_to(O, LEFT)
+        A_label = Text("A", font_size=label_font_size).next_to(A, RIGHT)
+
+        self.play(ShowCreation(ray), FadeIn(O),FadeIn(A))
+        self.play(Write(O_label), Write(A_label))
+        self.play(self.highlight_point(O, O_label), self.highlight_point(A, A_label))
+
+        self.wait(1)
+        self.remove_subtitle(subtitle)
+
+        # Step 2: Put the compass point on O and draw a big arc that touches the line OA at point B.
+        
+        # Add visual cues about the starting point
+        center_highlight = Circle(
+            radius=0.3, 
+            color=self.HIGHLIGHT_COLOR, 
+            fill_opacity=0.2
+        ).move_to(O.get_center())
+        self.play(ShowCreation(center_highlight))
+        
+        subtitle = self.add_subtitle("step_2")
+        radius = 3.5
+        arc_O = Arc(radius=radius, start_angle=degrees_to_manimPI(190), angle=-degrees_to_manimPI(200), color=MAROON).shift(O.get_center())
+        B = Dot(O.get_center() + np.array([radius, 0, 0]), color=self.POINT_COLOR)
+        B_label = Text("B", font_size=label_font_size).next_to(B, UP+RIGHT)
+
+        self.play(ShowCreation(arc_O))
+        self.play(FadeIn(B), Write(B_label))
+        self.play(self.highlight_point(B, B_label))
+        self.wait(1)
+        self.remove_subtitle(subtitle)
+
+        self.play(FadeOut(center_highlight)) # remove earlier compass point
+
+        # Step 3: Move the compass point to B and draw another arc that crosses the first arc at point C.
+        
+        # visual cue about the compass point
+        center_highlight = Circle(
+            radius=0.3, 
+            color=self.HIGHLIGHT_COLOR, 
+            fill_opacity=0.2
+        ).move_to(B.get_center())
+        self.play(ShowCreation(center_highlight))
+
+        subtitle = self.add_subtitle("step_3")
+        arc_B = Arc(radius=radius, start_angle=degrees_to_manimPI(130), angle=-degrees_to_manimPI(15), color=MAROON).shift(B.get_center())
+        
+        C_pos = O.get_center() + np.array([
+            radius * np.cos(degrees_to_manimPI(60)),  # x coordinate
+            radius * np.sin(degrees_to_manimPI(60)),  # y coordinate
+            0
+        ])
+        
+        C = Dot(C_pos, color=self.POINT_COLOR)
+        C_label = Text("C", font_size=label_font_size).next_to(C, UP)
+
+        self.play(ShowCreation(arc_B))
+        self.play(FadeIn(C), Write(C_label))
+        self.play(self.highlight_point(C, C_label))
+        self.wait(1)
+        self.remove_subtitle(subtitle)
+
+        self.play(FadeOut(center_highlight)) # remove earlier compass point
+
+
+        # Step 4: Move the compass point to C and draw another arc that crosses the first arc at point D.
+        # visual cue about the compass point
+        center_highlight = Circle(
+            radius=0.3, 
+            color=self.HIGHLIGHT_COLOR, 
+            fill_opacity=0.2
+        ).move_to(C.get_center())
+        self.play(ShowCreation(center_highlight))
+
+        subtitle = self.add_subtitle("step_4")
+        arc_C = Arc(radius=radius, start_angle=degrees_to_manimPI(190), angle=-degrees_to_manimPI(15), color=MAROON).shift(C.get_center())
+        
+        D_pos = O.get_center() + np.array([
+            radius * np.cos(degrees_to_manimPI(120)),  # x coordinate
+            radius * np.sin(degrees_to_manimPI(120)),  # y coordinate
+            0
+        ])
+        
+        D = Dot(D_pos, color=self.POINT_COLOR)
+        D_label = Text("D", font_size=label_font_size).next_to(D, LEFT)
+
+        self.play(ShowCreation(arc_C))
+        self.play(FadeIn(D), Write(D_label))
+        self.play(self.highlight_point(D, D_label))
+        self.wait(1)
+        self.remove_subtitle(subtitle)
+
+        self.play(FadeOut(center_highlight)) # remove earlier compass point
+
+        # Step 5: Draw two more arcs from points C and D so they cross each other at point E.
+        # visual cue about the compass point
+        center_highlight_C = Circle(
+            radius=0.3, 
+            color=self.HIGHLIGHT_COLOR, 
+            fill_opacity=0.2
+        ).move_to(C.get_center())
+        self.play(ShowCreation(center_highlight_C))
+
+        subtitle = self.add_subtitle("step_5")
+        
+        arc_C1 = Arc(radius=radius, start_angle=degrees_to_manimPI(130), angle=-degrees_to_manimPI(25), color=MAROON).shift(C.get_center())
+        self.play(ShowCreation(arc_C1))
+        
+        self.play(FadeOut(center_highlight_C)) # remove earlier compass point
+
+        center_highlight_D = Circle(
+            radius=0.3, 
+            color=self.HIGHLIGHT_COLOR, 
+            fill_opacity=0.2
+        ).move_to(D.get_center())
+        self.play(ShowCreation(center_highlight_D))
+
+        arc_D1 = Arc(radius=radius, start_angle=degrees_to_manimPI(75), angle=-degrees_to_manimPI(25), color=MAROON).shift(D.get_center())
+        self.play(ShowCreation(arc_D1))
+        
+        #find intersection of the two arcs point E
+        
+
+        self.play(FadeOut(center_highlight_D)) # remove earlier compass point
+
+        # Step 6: Use a ruler to draw a straight line from O to E.
+
+        # Step 7: Use a protractor to measure the angle ∡AOE. It should be 90°.
