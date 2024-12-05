@@ -897,6 +897,7 @@ class Draw90DegreesCompassFinal(Scene):
 
     def construct(self):      
         label_font_size = 24
+        radius = 2
 
         # Grid background with adjusted position
         grid = NumberPlane().fade(0.8).shift(DOWN)  # Shift grid down for better alignment
@@ -928,7 +929,7 @@ class Draw90DegreesCompassFinal(Scene):
         self.play(ShowCreation(center_highlight))
         
         subtitle = self.add_subtitle("step_2")
-        radius = 3.5
+        
         arc_O = Arc(radius=radius, start_angle=degrees_to_manimPI(190), angle=-degrees_to_manimPI(200), color=MAROON).shift(O.get_center())
         B = Dot(O.get_center() + np.array([radius, 0, 0]), color=self.POINT_COLOR)
         B_label = Text("B", font_size=label_font_size).next_to(B, UP+RIGHT)
@@ -1028,10 +1029,114 @@ class Draw90DegreesCompassFinal(Scene):
         self.play(ShowCreation(arc_D1))
         
         #find intersection of the two arcs point E
-        
+        # Calculate the intersection point E
+        E_pos = C.get_center() + np.array([
+            radius * np.cos(degrees_to_manimPI(120)),  # x coordinate
+            radius * np.sin(degrees_to_manimPI(120)),  # y coordinate
+            0
+        ])
+
+
+        E = Dot(E_pos, color=self.POINT_COLOR)
+        E_label = Text("E", font_size=label_font_size).next_to(E, UP+RIGHT/2)
+
+        self.play(FadeIn(E), Write(E_label))
+        self.play(self.highlight_point(E, E_label))
+        self.wait(1)
+        self.remove_subtitle(subtitle)
 
         self.play(FadeOut(center_highlight_D)) # remove earlier compass point
 
         # Step 6: Use a ruler to draw a straight line from O to E.
+        subtitle = self.add_subtitle("step_6")
+        
+        # Calculate extended point beyond E
+        OE_vector = E.get_center() - O.get_center()
+        extended_point = O.get_center() + 1.5 * OE_vector
+        
+        # Create dotted line OE extended
+        OE_extended = DashedLine(
+            start=O.get_center(),
+            end=extended_point,
+            color=WHITE,
+            dash_length=0.15,
+            positive_space_ratio=0.5
+        )
+        self.play(ShowCreation(OE_extended))
+        self.wait(1)
+        
+        self.remove_subtitle(subtitle)
 
         # Step 7: Use a protractor to measure the angle ∡AOE. It should be 90°.
+        subtitle = self.add_subtitle("step_7") 
+
+        # Prepare for angle highlighting
+        OA_line = Line(O.get_center(), A.get_center(), color=BLUE, stroke_width=3)
+        OE_line = Line(O.get_center(), E.get_center(), color=BLUE, stroke_width=3)
+
+        # Prepare for perpendicular symbol instead of arc for this angle
+        # Create the vertical segment (up from x axis)
+        vertical_segment = Line(
+            start=O.get_center() + RIGHT * 0.5,
+            end=O.get_center() + RIGHT * 0.5 + UP * 0.7,
+            color=BLUE,
+            stroke_width=3
+        )
+
+        # Create the horizontal segment (left from the top of the vertical line)
+        horizontal_segment = Line(
+            start=vertical_segment.get_end(),
+            end=vertical_segment.get_end() + LEFT * 0.5,
+            color=BLUE,
+            stroke_width=3
+        )
+
+        # Animate the perpendicular symbol
+        self.play(
+            ShowCreation(vertical_segment),
+            run_time=0.5
+        )
+        self.play(
+            ShowCreation(horizontal_segment),
+            run_time=0.5
+        )
+
+        # Add the 90° label near the perpendicular symbol
+        angle_AOE_label = Text("90°", font_size=label_font_size).next_to(vertical_segment, RIGHT*0.5)
+
+        self.wait(2)
+        self.remove_subtitle(subtitle)
+
+        
+        # Animated highlighting sequence
+        self.play(
+            # Gradually draw lines from O to A and O to E
+            ShowCreation(OA_line),
+            ShowCreation(OE_line),
+            run_time=2
+        )
+        
+        # Pulsing and indication of the angle
+        self.play(
+            # Highlight the angle arc
+            #angle_AOE.animate.set_color(YELLOW).set_stroke(width=4),
+            # Write the angle label
+            Write(angle_AOE_label),
+            # Add a pulsing effect to the lines
+            OA_line.animate.set_color(GOLD),
+            OE_line.animate.set_color(GOLD),
+            vertical_segment.animate.set_color(GOLD),
+            horizontal_segment.animate.set_color(GOLD),
+            run_time=2
+        )
+        
+        # Brief pause to emphasize the 30-degree angle
+        self.wait(2)
+        self.remove_subtitle(subtitle)
+        
+        # Final pause with a subtle zoom out to show full construction
+        self.play(
+            grid.animate.scale(1.3).set_opacity(0.5),
+            run_time=2
+        )
+        self.wait(2)
