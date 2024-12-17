@@ -2,9 +2,9 @@ directories:
   # Set this to true if you want the path to video files
   # to match the directory structure of the path to the
   # sourcecode generating that video
-  mirror_module_path: False
+  mirror_module_path: true
   # Where should manim output video and image files?
-  output: ""
+  output: "/media/" 
   # If you want to use images, manim will look to these folders to find them
   raster_images: ""
   vector_images: ""

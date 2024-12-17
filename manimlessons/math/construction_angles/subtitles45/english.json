@@ -1,0 +1,13 @@
+{
+    "step_1": "Use a ruler to draw a straight line called OA.",
+    "step_2": "Put the compass point on O and draw a big arc that touches the line OA at point B.",
+    "step_3": "Move the compass point to B and draw another arc that crosses the first arc at point C.",
+    "step_4": "Move the compass point to C and draw another arc that crosses the first arc at point D.",
+    "step_5": "Draw two more arcs from points C and D so they cross each other at point E.",
+    "step_6": "Use a ruler to draw a straight line from O to E. Label the point where OE intersects the first big arc as F.",
+    "step_7": "Use a protractor to measure the angle ∡AOE. It should be 90°.",
+    "step_8": "We will bisect this angle to get a 45° angle.",
+    "step_9": "To bisect this angle, draw two more arcs from points B and F so they cross each other at point H.",
+    "step_10": "Use a ruler to draw a straight line from O to H. Then use a protactor to measure the angle ∡AOH. It should be 45°."
+  }
+  

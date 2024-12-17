@@ -1140,3 +1140,507 @@ class Draw90DegreesCompassFinal(Scene):
             run_time=2
         )
         self.wait(2)
+
+# Construction of 45 degrees
+class Draw45DegreesCompassFinal(Scene):
+    def __init__(self, language=language, **kwargs):
+        super().__init__(**kwargs)
+        self.show_subtitles = show_subtitle  # Toggle subtitles on/off for production
+        self.language = language  # Language for subtitles
+        self.subtitles = self.load_subtitles(language)
+        
+        # Consistent color palette for geometric elements
+        self.POINT_COLOR = BLUE
+        self.CONSTRUCTION_COLOR = TEAL
+        self.ARC_COLORS = [MAROON, PURPLE, WHITE]
+        self.HIGHLIGHT_COLOR = GREEN
+    
+    def load_subtitles(self, language):
+        """
+        Load subtitles from the specified language's JSON file.
+        
+        Args:
+            language (str): Language code for subtitles.
+        
+        Returns:
+            dict: Loaded subtitle dictionary.
+        Raises:
+            FileNotFoundError: If subtitle file is missing.
+        """
+        # Note: You'll need to create this JSON file with your subtitle translations
+        subtitle_file = f"subtitles45/{language}.json"
+        if not os.path.exists(subtitle_file):
+            print(f"Warning: Subtitle file {subtitle_file} not found! Using default text.")
+            return {
+                "step_1": "Start by drawing a line segment OA",
+                "step_2": "Draw an arc from O with a specific radius",
+                # Add other default subtitle texts here
+                "step_7": "Measure the angle AOE. It is 30 degrees!"
+            }
+        
+        with open(subtitle_file, 'r', encoding='utf-8') as file:
+            return json.load(file)
+
+    def add_subtitle(self, key, font_size=30, max_width_ratio=0.7):
+        """Helper function to add and animate subtitles at the bottom of the screen."""
+        if not self.show_subtitles:
+            return None, None
+
+        # Get subtitle text from the subtitles dictionary
+        subtitle_text = self.subtitles.get(key, "")
+
+        # Choose the font based on the language
+        font = self.get_font_by_language()
+
+        # Calculate the maximum width for the subtitle text
+        max_width = FRAME_WIDTH * max_width_ratio
+
+        # Break the subtitle into multiple lines if it exceeds max width
+        words = subtitle_text.split()
+        lines = []
+        current_line = ""
+
+        for word in words:
+            test_line = f"{current_line} {word}".strip()
+            if MarkupText(test_line, font_size=font_size, font=font).get_width() > max_width:
+                lines.append(current_line.strip())
+                current_line = word
+            else:
+                current_line = test_line
+
+        lines.append(current_line.strip())  # Add the last line
+
+        # Create a VGroup to stack lines and center them
+        subtitle_lines = VGroup(*[
+            MarkupText(line, font_size=font_size, font=font).set_color(WHITE)
+            for line in lines
+        ])
+        subtitle_lines.arrange(DOWN, center=True, aligned_edge=ORIGIN)
+
+        # Position the subtitle group at the bottom center of the screen
+        subtitle_lines.move_to(3*DOWN)
+
+        # Display the subtitle with an animation
+        self.play(Write(subtitle_lines))
+        return subtitle_lines
+
+    def remove_subtitle(self, subtitle):
+        """Helper function to remove subtitles."""
+        if subtitle:
+            self.play(FadeOut(subtitle)) # fade out the subtitle
+
+    def get_font_by_language(self):
+        """Get the appropriate font based on the selected language."""
+        if self.language == "nepali":
+            font = nepali_font
+        elif self.language == "tibetan":
+            font = tibetan_font
+        elif self.language == "nepalbhasa":
+            font = nepalbhasa_font
+        elif self.language == "maithili":
+            font = maithili_font
+        else:
+            font = english_font  # Default to English if language is not specified
+        return font
+
+    
+    def highlight_point(self, point, label=None):
+        """
+        Create a pulsing highlight effect for a point.
+        
+        Args:
+            point (Dot): The point to highlight.
+            label (Text, optional): Label associated with the point.
+        
+        Returns:
+            Animation sequence for highlighting.
+        """
+        pulse = AnimationGroup(
+            point.animate.scale(1.5).set_color(self.HIGHLIGHT_COLOR),
+            point.animate.scale(1/1.5).set_color(self.POINT_COLOR)
+        )
+        
+        if label:
+            return AnimationGroup(
+                Indicate(point),
+                Indicate(label),
+                pulse
+            )
+        return pulse
+
+    def construct(self):      
+        label_font_size = 24
+        radius = 2
+
+        # Grid background with adjusted position
+        grid = NumberPlane().fade(0.8).shift(DOWN)  # Shift grid down for better alignment
+        self.add(grid)
+
+        # # Step 1: Use a ruler to draw a straight line called OA.
+        subtitle = self.add_subtitle("step_1")
+        ray = Line(LEFT * 3, RIGHT * 3, color=self.CONSTRUCTION_COLOR, stroke_width=2).shift(DOWN)
+        O = Dot(ray.get_left(), color=self.POINT_COLOR)
+        A = Dot(ray.get_right(), color=self.POINT_COLOR)
+        O_label = Text("O", font_size=label_font_size).next_to(O, LEFT)
+        A_label = Text("A", font_size=label_font_size).next_to(A, RIGHT)
+
+        self.play(ShowCreation(ray), FadeIn(O),FadeIn(A))
+        self.play(Write(O_label), Write(A_label))
+        self.play(self.highlight_point(O, O_label), self.highlight_point(A, A_label))
+
+        self.wait(1)
+        self.remove_subtitle(subtitle)
+
+        # Step 2: Put the compass point on O and draw a big arc that touches the line OA at point B.
+        
+        # Add visual cues about the starting point
+        center_highlight = Circle(
+            radius=0.3, 
+            color=self.HIGHLIGHT_COLOR, 
+            fill_opacity=0.2
+        ).move_to(O.get_center())
+        self.play(ShowCreation(center_highlight))
+        
+        subtitle = self.add_subtitle("step_2")
+        
+        arc_O = Arc(radius=radius, start_angle=degrees_to_manimPI(190), angle=-degrees_to_manimPI(200), color=MAROON).shift(O.get_center())
+        B = Dot(O.get_center() + np.array([radius, 0, 0]), color=self.POINT_COLOR)
+        B_label = Text("B", font_size=label_font_size).next_to(B, UP+RIGHT)
+
+        self.play(ShowCreation(arc_O))
+        self.play(FadeIn(B), Write(B_label))
+        self.play(self.highlight_point(B, B_label))
+        self.wait(1)
+        self.remove_subtitle(subtitle)
+
+        self.play(FadeOut(center_highlight)) # remove earlier compass point
+
+        # self.embed()
+
+        # Step 3: Move the compass point to B and draw another arc that crosses the first arc at point C.
+        
+        # visual cue about the compass point
+        center_highlight = Circle(
+            radius=0.3, 
+            color=self.HIGHLIGHT_COLOR, 
+            fill_opacity=0.2
+        ).move_to(B.get_center())
+        self.play(ShowCreation(center_highlight))
+
+        subtitle = self.add_subtitle("step_3")
+        arc_B = Arc(radius=radius, start_angle=degrees_to_manimPI(130), angle=-degrees_to_manimPI(15), color=MAROON).shift(B.get_center())
+        
+        C_pos = O.get_center() + np.array([
+            radius * np.cos(degrees_to_manimPI(60)),  # x coordinate
+            radius * np.sin(degrees_to_manimPI(60)),  # y coordinate
+            0
+        ])
+        
+        C = Dot(C_pos, color=self.POINT_COLOR)
+        C_label = Text("C", font_size=label_font_size).next_to(C, UP)
+
+        self.play(ShowCreation(arc_B))
+        self.play(FadeIn(C), Write(C_label))
+        self.play(self.highlight_point(C, C_label))
+        self.wait(1)
+        self.remove_subtitle(subtitle)
+
+        self.play(FadeOut(center_highlight)) # remove earlier compass point
+
+
+        # Step 4: Move the compass point to C and draw another arc that crosses the first arc at point D.
+        # visual cue about the compass point
+        center_highlight = Circle(
+            radius=0.3, 
+            color=self.HIGHLIGHT_COLOR, 
+            fill_opacity=0.2
+        ).move_to(C.get_center())
+        self.play(ShowCreation(center_highlight))
+
+        subtitle = self.add_subtitle("step_4")
+        arc_C = Arc(radius=radius, start_angle=degrees_to_manimPI(190), angle=-degrees_to_manimPI(15), color=MAROON).shift(C.get_center())
+        
+        D_pos = O.get_center() + np.array([
+            radius * np.cos(degrees_to_manimPI(120)),  # x coordinate
+            radius * np.sin(degrees_to_manimPI(120)),  # y coordinate
+            0
+        ])
+        
+        D = Dot(D_pos, color=self.POINT_COLOR)
+        D_label = Text("D", font_size=label_font_size).next_to(D, LEFT)
+
+        self.play(ShowCreation(arc_C))
+        self.play(FadeIn(D), Write(D_label))
+        self.play(self.highlight_point(D, D_label))
+        self.wait(1)
+        self.remove_subtitle(subtitle)
+
+        self.play(FadeOut(center_highlight)) # remove earlier compass point
+
+        # Step 5: Draw two more arcs from points C and D so they cross each other at point E.
+        # visual cue about the compass point
+        center_highlight_C = Circle(
+            radius=0.3, 
+            color=self.HIGHLIGHT_COLOR, 
+            fill_opacity=0.2
+        ).move_to(C.get_center())
+        self.play(ShowCreation(center_highlight_C))
+
+        subtitle = self.add_subtitle("step_5")
+        
+        arc_C1 = Arc(radius=radius, start_angle=degrees_to_manimPI(130), angle=-degrees_to_manimPI(25), color=MAROON).shift(C.get_center())
+        self.play(ShowCreation(arc_C1))
+        
+        self.play(FadeOut(center_highlight_C)) # remove earlier compass point
+
+        center_highlight_D = Circle(
+            radius=0.3, 
+            color=self.HIGHLIGHT_COLOR, 
+            fill_opacity=0.2
+        ).move_to(D.get_center())
+        self.play(ShowCreation(center_highlight_D))
+
+        arc_D1 = Arc(radius=radius, start_angle=degrees_to_manimPI(75), angle=-degrees_to_manimPI(25), color=MAROON).shift(D.get_center())
+        self.play(ShowCreation(arc_D1))
+        
+        #find intersection of the two arcs point E
+        # Calculate the intersection point E
+        E_pos = C.get_center() + np.array([
+            radius * np.cos(degrees_to_manimPI(120)),  # x coordinate
+            radius * np.sin(degrees_to_manimPI(120)),  # y coordinate
+            0
+        ])
+
+
+        E = Dot(E_pos, color=self.POINT_COLOR)
+        E_label = Text("E", font_size=label_font_size).next_to(E, UP+RIGHT/2)
+
+        self.play(FadeIn(E), Write(E_label))
+        self.play(self.highlight_point(E, E_label))
+        self.wait(1)
+        self.remove_subtitle(subtitle)
+
+        self.play(FadeOut(center_highlight_D)) # remove earlier compass point
+
+        # Step 6: Use a ruler to draw a straight line from O to E. Label the point where OE intersects the first big arc as F.
+        subtitle = self.add_subtitle("step_6")
+        
+        # Calculate extended point beyond E
+        OE_vector = E.get_center() - O.get_center()
+        extended_point = O.get_center() + 1.5 * OE_vector
+        
+        # Create dotted line OE extended
+        OE_extended = DashedLine(
+            start=O.get_center(),
+            end=extended_point,
+            color=WHITE,
+            dash_length=0.15,
+            positive_space_ratio=0.5
+        )
+        self.play(ShowCreation(OE_extended))
+        self.wait(1)
+
+        # Calculate the intersection point F
+        F_pos = O.get_center() + np.array([
+            radius * np.cos(degrees_to_manimPI(90)),  # x coordinate
+            radius * np.sin(degrees_to_manimPI(90)),  # y coordinate
+            0
+        ])
+
+        F = Dot(F_pos, color=self.POINT_COLOR)
+        F_label = Text("F", font_size=label_font_size).next_to(F, 0.5*RIGHT)
+        self.play(FadeIn(F), Write(F_label))    
+        self.wait(1)
+        
+        self.remove_subtitle(subtitle)
+
+        # Step 7: Use a protractor to measure the angle ∡AOE. It should be 90°.
+        subtitle = self.add_subtitle("step_7") 
+
+        # Prepare for angle highlighting
+        OA_line = Line(O.get_center(), A.get_center(), color=BLUE, stroke_width=3)
+        OE_line = Line(O.get_center(), E.get_center(), color=BLUE, stroke_width=3)
+
+        # Prepare for perpendicular symbol instead of arc for this angle
+        # Create the vertical segment (up from x axis)
+        vertical_segment = Line(
+            start=O.get_center() + RIGHT * 0.5,
+            end=O.get_center() + RIGHT * 0.5 + UP * 0.7,
+            color=BLUE,
+            stroke_width=3
+        )
+
+        # Create the horizontal segment (left from the top of the vertical line)
+        horizontal_segment = Line(
+            start=vertical_segment.get_end(),
+            end=vertical_segment.get_end() + LEFT * 0.5,
+            color=BLUE,
+            stroke_width=3
+        )
+
+        # Animate the perpendicular symbol
+        self.play(
+            ShowCreation(vertical_segment),
+            run_time=0.5
+        )
+        self.play(
+            ShowCreation(horizontal_segment),
+            run_time=0.5
+        )
+
+        # Add the 90° label near the perpendicular symbol
+        angle_AOE_label = Text("90°", font_size=label_font_size).next_to(vertical_segment, RIGHT*0.5)
+        
+        # Animated highlighting sequence
+        self.play(
+            # Gradually draw lines from O to A and O to E
+            ShowCreation(OA_line),
+            ShowCreation(OE_line),
+            run_time=2
+        )
+        
+        self.wait(2)
+        self.remove_subtitle(subtitle)
+
+        # Step 8: We will bisect this angle to get a 45° angle.
+        subtitle = self.add_subtitle("step_8") 
+
+        # Pulsing and indication of the angle
+        self.play(
+            # Highlight the angle arc
+            #angle_AOE.animate.set_color(YELLOW).set_stroke(width=4),
+            # Write the angle label
+            Write(angle_AOE_label),
+            # Add a pulsing effect to the lines
+            OA_line.animate.set_color(GOLD),
+            OE_line.animate.set_color(GOLD),
+            vertical_segment.animate.set_color(GOLD),
+            horizontal_segment.animate.set_color(GOLD),
+            run_time=2
+        )
+        
+        self.play(FadeOut(angle_AOE_label)) # remove the 90 degree label
+        
+
+        #remove the perpendicular symbol and the gold highlights to go to default
+        self.play(
+            FadeOut(vertical_segment),
+            FadeOut(horizontal_segment),
+            OA_line.animate.set_color(BLUE),
+            OE_line.animate.set_color(BLUE),
+            run_time=1
+        )
+
+        self.wait(2)
+        self.remove_subtitle(subtitle)
+
+        
+
+        # Step 9: To bisect this angle, draw two more arcs from points B and F so they cross each other at point H.
+        # visual cue about the compass point
+        subtitle = self.add_subtitle("step_9")
+        
+        center_highlight_B = Circle(
+            radius=0.3, 
+            color=self.HIGHLIGHT_COLOR, 
+            fill_opacity=0.2
+        ).move_to(B.get_center())
+        self.play(ShowCreation(center_highlight_B))
+
+        arc_B1 = Arc(radius=radius, start_angle=degrees_to_manimPI(100), angle=-degrees_to_manimPI(25), color=MAROON).shift(B.get_center())
+        self.play(ShowCreation(arc_B1))
+        
+        self.play(FadeOut(center_highlight_B)) # remove compass point
+        
+        center_highlight_F = Circle(
+            radius=0.3, 
+            color=self.HIGHLIGHT_COLOR, 
+            fill_opacity=0.2
+        ).move_to(F.get_center())
+        self.play(ShowCreation(center_highlight_F))
+
+        arc_F1 = Arc(radius=radius, start_angle=degrees_to_manimPI(10), angle=-degrees_to_manimPI(25), color=MAROON).shift(F.get_center())
+        self.play(ShowCreation(arc_F1))
+        
+        self.play(FadeOut(center_highlight_F)) # remove compass point
+
+        # find intersections of arcs to get point H
+        # Calculate the intersection point H
+        H_pos = F.get_center() + radius*RIGHT
+        H = Dot(H_pos, color=self.POINT_COLOR)
+        H_label = Text("H", font_size=label_font_size).next_to(H, RIGHT)
+
+        self.play(FadeIn(H), Write(H_label))
+        self.play(self.highlight_point(H, H_label))
+        self.wait(1)
+
+        #draw line segment through O and H, creating extended line beyond H
+        OH_vector = H.get_center() - O.get_center()
+        extended_point = O.get_center() + 1.5 * OH_vector
+
+        OH_extended = DashedLine(
+            start=O.get_center(),
+            end=extended_point,
+            color=WHITE,
+            dash_length=0.15,
+            positive_space_ratio=0.5
+        )
+        self.play(ShowCreation(OH_extended))
+        self.wait(1)
+
+        # highlight the angle AOH as 45 degrees
+        # Prepare for angle highlighting
+        OA_line = Line(O.get_center(), A.get_center(), color=BLUE, stroke_width=3)
+        OH_line = Line(O.get_center(), extended_point, color=BLUE, stroke_width=3)
+
+        # create arc to denote the angle AOH
+        angle_AOH = Arc(
+            radius=0.7,
+            start_angle=degrees_to_manimPI(0),
+            angle=degrees_to_manimPI(45),
+            color=BLUE
+        ).shift(O.get_center())
+
+        self.play(ShowCreation(angle_AOH)) 
+
+        # Adjusting the angle label position further from the arc
+        arc_midpoint = angle_AOH.get_arc_center()
+        label_position = arc_midpoint + (RIGHT) + 0.4*UP
+        angle_AOH_label = Text("45°", font_size=label_font_size).move_to(label_position)
+
+        self.wait(1)
+
+        # Animated highlighting sequence
+        self.play(
+            # Gradually draw lines from O to A and O to H
+            ShowCreation(OA_line),
+            ShowCreation(OH_line),
+            run_time=2
+        )
+        
+        # Pulsing and indication of the angle
+        self.play(
+            # Highlight the angle arc
+            angle_AOH.animate.set_color(YELLOW).set_stroke(width=4),
+            # Write the angle label
+            Write(angle_AOH_label),
+            # Add a pulsing effect to the lines
+            OA_line.animate.set_color(GOLD),
+            OH_line.animate.set_color(GOLD),
+            run_time=1.5
+        )
+        
+        # Brief pause to emphasize the 45-degree angle
+        self.wait(2)
+
+
+
+        self.remove_subtitle(subtitle)
+
+        
+        # Final pause with a subtle zoom out to show full construction
+        self.play(
+            grid.animate.scale(1.3).set_opacity(0.5),
+            run_time=2
+        )
+        self.wait(2)

@@ -9,7 +9,6 @@ License: MIT
 Project-URL: Bug Tracker, https://github.com/3b1b/manim/issues
 Project-URL: Documentation, https://3b1b.github.io/manim/
 Project-URL: Source Code, https://github.com/3b1b/manim
-Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Topic :: Scientific/Engineering
@@ -23,6 +22,31 @@ Classifier: Programming Language :: Python :: 3 :: Only
 Classifier: Natural Language :: English
 Description-Content-Type: text/markdown; charset=UTF-8
 License-File: LICENSE.md
+Requires-Dist: colour
+Requires-Dist: ipython>=8.18.0
+Requires-Dist: isosurfaces
+Requires-Dist: fontTools
+Requires-Dist: mapbox-earcut
+Requires-Dist: manimpango>=0.6.0
+Requires-Dist: matplotlib
+Requires-Dist: moderngl
+Requires-Dist: moderngl_window
+Requires-Dist: numpy
+Requires-Dist: Pillow
+Requires-Dist: pydub
+Requires-Dist: pygments
+Requires-Dist: PyOpenGL
+Requires-Dist: pyperclip
+Requires-Dist: pyyaml
+Requires-Dist: rich
+Requires-Dist: scipy
+Requires-Dist: screeninfo
+Requires-Dist: skia-pathops
+Requires-Dist: svgelements>=1.8.1
+Requires-Dist: sympy
+Requires-Dist: tqdm
+Requires-Dist: typing-extensions; python_version < "3.11"
+Requires-Dist: validators
 
 <p align="center">
     <a href="https://github.com/3b1b/manim">
@@ -143,5 +167,3 @@ Is always welcome.  As mentioned above, the [community edition](https://github.c
 
 ## License
 This project falls under the MIT license.
-
-
